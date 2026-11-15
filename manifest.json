@@ -1,6 +1,6 @@
+ {
 
-{
-  "id": "./",
+"id": "./",
   "name": "Sudoku Simba",
   "short_name": "Sudoku Simba",
   "description": "A fun and challenging Sudoku puzzle game. Solve puzzles, improve your logic skills, and enjoy playing Sudoku anytime.",
@@ -24,3 +24,4 @@
     }
   ]
 }
+
