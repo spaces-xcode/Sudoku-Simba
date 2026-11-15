@@ -1,0 +1,157 @@
+:root {
+--bg-main: #f8fafc;
+--bg-card: #ffffff;
+--text-primary: #0f172a;
+--text-secondary: #64748b;
+--grid-border: #1e293b;
+--cell-border: #cbd5e1;
+--cell-selected: #bfdbfe;
+--cell-related: #e2e8f0;
+--cell-same-num: #93c5fd;
+--cell-fixed: #0f172a;
+--cell-user: #2563eb;
+--cell-error: #ef4444;
+--cell-error-bg: #fee2e2;
+--accent: #2563eb;
+}
+/* Theme: Classic Paper */
+[data-theme="paper"] {
+--bg-main: #f4efe6;
+--bg-card: #fcf9f2;
+--text-primary: #2c241b;
+--text-secondary: #786a58;
+--grid-border: #4a3b2c;
+--cell-border: #dcd3c1;
+--cell-selected: #e6d5b8;
+--cell-related: #efe7d6;
+--cell-same-num: #d9c29c;
+--cell-fixed: #2c241b;
+--cell-user: #8c5a2b;
+--cell-error: #c83e37;
+--cell-error-bg: #f8d7da;
+--accent: #8c5a2b;
+}
+/* Theme: Dark Mode */
+[data-theme="dark"] {
+--bg-main: #0f172a;
+--bg-card: #1e293b;
+--text-primary: #f8fafc;
+--text-secondary: #94a3b8;
+--grid-border: #94a3b8;
+--cell-border: #334155;
+--cell-selected: #1d4ed8;
+--cell-related: #273549;
+--cell-same-num: #2563eb;
+--cell-fixed: #f8fafc;
+--cell-user: #60a5fa;
+--cell-error: #f87171;
+--cell-error-bg: #451a1a;
+--accent: #3b82f6;
+}
+/* Theme: Mint Forest */
+[data-theme="mint"] {
+--bg-main: #ecfdf5;
+--bg-card: #ffffff;
+--text-primary: #064e3b;
+--text-secondary: #047857;
+--grid-border: #065f46;
+--cell-border: #a7f3d0;
+--cell-selected: #6ee7b7;
+--cell-related: #d1fae5;
+--cell-same-num: #34d399;
+--cell-fixed: #064e3b;
+--cell-user: #059669;
+--cell-error: #dc2626;
+--cell-error-bg: #fee2e2;
+--accent: #059669;
+}
+body {
+font-family: 'Cairo', 'Inter', sans-serif;
+background-color: var(--bg-main);
+color: var(--text-primary);
+transition: background-color 0.3s, color 0.3s;
+user-select: none;
+-webkit-tap-highlight-color: transparent;
+}
+.num-font {
+font-family: 'Inter', sans-serif;
+}
+/* Sudoku Grid Styling */
+.sudoku-grid {
+display: grid;
+grid-template-columns: repeat(9, 1fr);
+border: 3px solid var(--grid-border);
+background-color: var(--bg-card);
+aspect-ratio: 1 / 1;
+width: 100%;
+max-width: 460px;
+margin: 0 auto;
+border-radius: 8px;
+overflow: hidden;
+box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+direction: ltr;
+}
+.sudoku-cell {
+border-right: 1px solid var(--cell-border);
+border-bottom: 1px solid var(--cell-border);
+display: flex;
+align-items: center;
+justify-content: center;
+position: relative;
+cursor: pointer;
+transition: background-color 0.1s ease;
+}
+.sudoku-cell:nth-child(3n) {
+border-right: 2.5px solid var(--grid-border);
+}
+.sudoku-cell:nth-child(9n) {
+border-right: none;
+}
+.sudoku-cell:nth-child(n+19):nth-child(-n+27),
+.sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+border-bottom: 2.5px solid var(--grid-border);
+}
+.sudoku-cell:nth-child(n+73) {
+border-bottom: none;
+}
+/* Cell States */
+.cell-related { background-color: var(--cell-related); }
+.cell-same-num { background-color: var(--cell-same-num); font-weight: 800; }
+.cell-selected { background-color: var(--cell-selected) !important; box-shadow: inset 0 0 0 2px var(--accent); }
+.cell-fixed { color: var(--cell-fixed); font-weight: 700; }
+.cell-user { color: var(--cell-user); font-weight: 600; }
+.cell-error { color: var(--cell-error) !important; background-color: var(--cell-error-bg) !important; }
+/* Notes 3x3 sub-grid inside a cell */
+.notes-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+grid-template-rows: repeat(3, 1fr);
+width: 100%;
+height: 100%;
+padding: 1px;
+}
+.note-item {
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: clamp(8px, 2vw, 11px);
+line-height: 1;
+color: var(--text-secondary);
+font-weight: 600;
+}
+.note-highlight {
+color: var(--accent);
+font-weight: 900;
+transform: scale(1.15);
+}
+@keyframes flashComplete {
+0%, 100% { background-color: var(--bg-card); }
+50% { background-color: #fde047; }
+}
+.animate-flash {
+animation: flashComplete 0.5s ease;
+}
+.card-surface {
+background-color: var(--bg-card);
+border: 1px solid var(--cell-border);
+}

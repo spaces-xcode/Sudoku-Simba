@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="paper">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sudoku Simba</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tone.js for Sound Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- External Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Top Navigation Bar -->
+    <header class="w-full max-w-2xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <button onclick="openModal('homeModal')" class="p-2.5 rounded-xl card-surface hover:opacity-80 transition shadow-sm" title="القائمة الرئيسية">
+                <i class="fas fa-home text-lg" style="color: var(--accent);"></i>
+            </button>
+            <!-- Brand Logo from images folder -->
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm overflow-hidden border" style="border-color: var(--accent);">
+                <img src="logo.jpeg" alt="Sudoku Simba Logo" class="w-full h-full object-cover" onerror="this.src='logo.svg'; this.className='w-6 h-6';">
+            </div>
+            <div>
+                <h1 class="font-extrabold text-lg leading-tight tracking-tight">Sudoku Simba</h1>
+                <p id="modeBadge" class="text-xs font-semibold" style="color: var(--text-secondary);">الوضع: متوسط</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button onclick="openModal('themeModal')" class="p-2.5 rounded-xl card-surface hover:opacity-80 transition shadow-sm" title="المظهر والخلفيات">
+                <i class="fas fa-palette text-lg" style="color: var(--accent);"></i>
+            </button>
+            <button onclick="openModal('statsModal')" class="p-2.5 rounded-xl card-surface hover:opacity-80 transition shadow-sm" title="الإحصائيات والتحديات">
+                <i class="fas fa-trophy text-lg text-amber-500"></i>
+            </button>
+            <button onclick="openModal('settingsModal')" class="p-2.5 rounded-xl card-surface hover:opacity-80 transition shadow-sm" title="الإعدادات">
+                <i class="fas fa-cog text-lg" style="color: var(--text-secondary);"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="w-full max-w-2xl mx-auto px-3 flex-1 flex flex-col justify-center">
+        
+        <!-- Status Bar -->
+        <div class="flex items-center justify-between px-3 py-2 mb-2 rounded-xl card-surface shadow-sm text-xs sm:text-sm font-bold">
+            <div class="flex items-center gap-3">
+                <div id="mistakesContainer" class="flex items-center gap-1">
+                    <span style="color: var(--text-secondary);">الأخطاء:</span>
+                    <span id="mistakesDisplay" class="num-font">0/3</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span style="color: var(--text-secondary);">النقاط:</span>
+                    <span id="scoreDisplay" class="num-font" style="color: var(--accent);">0</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span id="timerDisplay" class="num-font text-base">00:00</span>
+                <button id="pauseBtn" onclick="togglePause()" class="w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-80 transition" style="background-color: var(--cell-related);">
+                    <i id="pauseIcon" class="fas fa-pause text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Intelligent Hint Banner -->
+        <div id="smartBanner" class="hidden mb-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between shadow-sm transition-all" style="background-color: var(--cell-selected); color: var(--text-primary);">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-lightbulb text-amber-500 text-base"></i>
+                <span id="smartBannerText">تلميح ذكي: بقيت خانة واحدة فقط في هذا الصف!</span>
+            </div>
+            <button onclick="hideSmartBanner()" class="opacity-70 hover:opacity-100"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Sudoku Board Wrapper -->
+        <div class="relative w-full my-1">
+            <div id="sudokuGrid" class="sudoku-grid"></div>
+
+            <!-- Pause Overlay -->
+            <div id="pauseOverlay" class="hidden absolute inset-0 max-w-[460px] mx-auto rounded-lg backdrop-blur-md bg-slate-900/75 flex flex-col items-center justify-center text-white z-20">
+                <i class="fas fa-pause-circle text-5xl mb-3 text-blue-400"></i>
+                <h2 class="text-2xl font-bold mb-1">اللعبة متوقفة مؤقتاً</h2>
+                <p class="text-sm text-slate-300 mb-5">يتم حفظ تقدمك تلقائياً</p>
+                <button onclick="togglePause()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold shadow-lg transition transform active:scale-95 flex items-center gap-2">
+                    <i class="fas fa-play"></i> استئناف اللعب
+                </button>
+            </div>
+        </div>
+
+        <!-- Action Tools Bar -->
+        <div class="grid grid-cols-5 gap-2 max-w-[460px] w-full mx-auto mt-3">
+            <button onclick="undo()" class="flex flex-col items-center justify-center py-2 px-1 rounded-xl card-surface hover:opacity-80 active:scale-95 transition shadow-sm">
+                <i class="fas fa-undo text-base sm:text-lg mb-1" style="color: var(--text-primary);"></i>
+                <span class="text-[11px] font-bold" style="color: var(--text-secondary);">تراجع</span>
+            </button>
+
+            <button onclick="redo()" class="flex flex-col items-center justify-center py-2 px-1 rounded-xl card-surface hover:opacity-80 active:scale-95 transition shadow-sm">
+                <i class="fas fa-redo text-base sm:text-lg mb-1" style="color: var(--text-primary);"></i>
+                <span class="text-[11px] font-bold" style="color: var(--text-secondary);">إعادة</span>
+            </button>
+
+            <button onclick="eraseCell()" class="flex flex-col items-center justify-center py-2 px-1 rounded-xl card-surface hover:opacity-80 active:scale-95 transition shadow-sm">
+                <i class="fas fa-eraser text-base sm:text-lg mb-1" style="color: var(--text-primary);"></i>
+                <span class="text-[11px] font-bold" style="color: var(--text-secondary);">مسح</span>
+            </button>
+
+            <button id="notesBtn" onclick="toggleNotesMode()" class="relative flex flex-col items-center justify-center py-2 px-1 rounded-xl card-surface hover:opacity-80 active:scale-95 transition shadow-sm">
+                <span id="notesBadge" class="absolute top-1 left-1 text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-slate-200 text-slate-700">OFF</span>
+                <i class="fas fa-pencil-alt text-base sm:text-lg mb-1" style="color: var(--text-primary);"></i>
+                <span class="text-[11px] font-bold" style="color: var(--text-secondary);">ملاحظات</span>
+            </button>
+
+            <button onclick="useHint()" class="relative flex flex-col items-center justify-center py-2 px-1 rounded-xl card-surface hover:opacity-80 active:scale-95 transition shadow-sm">
+                <span id="hintCountBadge" class="absolute top-1 left-1 text-[10px] px-1.5 rounded-full font-bold bg-amber-500 text-white num-font">3</span>
+                <i class="fas fa-lightbulb text-base sm:text-lg mb-1 text-amber-500"></i>
+                <span class="text-[11px] font-bold" style="color: var(--text-secondary);">تلميح</span>
+            </button>
+        </div>
+
+        <!-- Number Pad (1-9) -->
+        <div id="numpad" class="grid grid-cols-9 gap-1.5 sm:gap-2 max-w-[460px] w-full mx-auto mt-3 mb-4" dir="ltr"></div>
+    </main>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- 1. Home & Game Modes Modal -->
+    <div id="homeModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="card-surface w-full max-w-md rounded-2xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-extrabold flex items-center gap-2">
+                    <i class="fas fa-th text-blue-600"></i> القائمة الرئيسية والأوضاع
+                </h2>
+                <button onclick="closeModal('homeModal')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200/50">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Daily Challenge & My Challenge Cards -->
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <button onclick="startDailyChallenge()" class="p-3.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white text-right shadow-md hover:opacity-95 transition active:scale-95">
+                    <div class="flex justify-between items-start mb-2">
+                        <img src="daily.svg" alt="Daily" class="w-7 h-7">
+                        <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">يومي</span>
+                    </div>
+                    <div class="font-extrabold text-sm">التحدي اليومي</div>
+                    <div id="dailyDateText" class="text-[11px] opacity-90 mt-0.5">لغز اليوم الخاص</div>
+                </button>
+
+                <button onclick="openMyChallengeBuilder()" class="p-3.5 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-700 text-white text-right shadow-md hover:opacity-95 transition active:scale-95">
+                    <div class="flex justify-between items-start mb-2">
+                        <img src="custom.svg" alt="Custom" class="w-7 h-7">
+                        <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">مخصص</span>
+                    </div>
+                    <div class="font-extrabold text-sm">تحديّ الخاص</div>
+                    <div class="text-[11px] opacity-90 mt-0.5">تحدي الزمن (3 دقائق)</div>
+                </button>
+            </div>
+
+            <!-- 4 Difficulty Levels -->
+            <h3 class="text-xs font-bold uppercase tracking-wider mb-2.5" style="color: var(--text-secondary);">اختر مستوى الصعوبة (لعبة جديدة)</h3>
+            <div class="space-y-2.5">
+                <button onclick="startNewGame('easy')" class="w-full p-3.5 rounded-xl card-surface hover:border-blue-500 flex items-center justify-between transition group">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        <div class="text-right">
+                            <div class="font-bold text-sm">سهل (Easy)</div>
+                            <div class="text-xs" style="color: var(--text-secondary);">مثالي للمبتدئين والإحماء الذهني</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-left text-xs opacity-50 group-hover:opacity-100"></i>
+                </button>
+
+                <button onclick="startNewGame('medium')" class="w-full p-3.5 rounded-xl card-surface hover:border-blue-500 flex items-center justify-between transition group">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                        <div class="text-right">
+                            <div class="font-bold text-sm">متوسط (Medium)</div>
+                            <div class="text-xs" style="color: var(--text-secondary);">توازن رائع بين الاسترخاء والمنطق</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-left text-xs opacity-50 group-hover:opacity-100"></i>
+                </button>
+
+                <button onclick="startNewGame('hard')" class="w-full p-3.5 rounded-xl card-surface hover:border-blue-500 flex items-center justify-between transition group">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                        <div class="text-right">
+                            <div class="font-bold text-sm">صعب (Hard)</div>
+                            <div class="text-xs" style="color: var(--text-secondary);">يتطلب استراتيجيات متقدمة وملاحظات</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-left text-xs opacity-50 group-hover:opacity-100"></i>
+                </button>
+
+                <button onclick="startNewGame('expert')" class="w-full p-3.5 rounded-xl card-surface hover:border-blue-500 flex items-center justify-between transition group">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-rose-600"></span>
+                        <div class="text-right">
+                            <div class="font-bold text-sm">خبير (Expert)</div>
+                            <div class="text-xs" style="color: var(--text-secondary);">لأساتذة السودوكو وتحدي الذاكرة القصوى</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-left text-xs opacity-50 group-hover:opacity-100"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. My Challenge Modal -->
+    <div id="myChallengeModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="card-surface w-full max-w-md rounded-2xl p-5 shadow-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-extrabold flex items-center gap-2">
+                    <i class="fas fa-stopwatch text-emerald-500"></i> تحديّ الخاص
+                </h2>
+                <button onclick="closeModal('myChallengeModal')" class="w-8 h-8 rounded-full flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-sm mb-4" style="color: var(--text-secondary);">
+                اختبر سرعتك وتركيزك! حاول إكمال شبكة السودوكو بالكامل قبل انتهاء الوقت المحدد (3 دقائق).
+            </p>
+            <button onclick="startSpeedChallenge()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm shadow transition">
+                بدء تحدي الزمن (3 دقائق)
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. Settings Modal -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="card-surface w-full max-w-md rounded-2xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-extrabold flex items-center gap-2">
+                    <i class="fas fa-sliders-h text-blue-600"></i> إعدادات اللعبة
+                </h2>
+                <button onclick="closeModal('settingsModal')" class="w-8 h-8 rounded-full flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-sm">
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--cell-border);">
+                    <div>
+                        <div class="font-bold">حد الأخطاء (Error Cap)</div>
+                        <div class="text-xs" style="color: var(--text-secondary);">إنهاء اللعبة عند ارتكاب 3 أخطاء</div>
+                    </div>
+                    <input type="checkbox" id="optErrorCap" onchange="toggleSetting('errorCap')" class="w-5 h-5 accent-blue-600 rounded cursor-pointer">
+                </div>
+
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--cell-border);">
+                    <div>
+                        <div class="font-bold">التحقق التلقائي والتراجع عن الخطأ</div>
+                        <div class="text-xs" style="color: var(--text-secondary);">التراجع تلقائياً عند إدخال رقم خاطئ</div>
+                    </div>
+                    <input type="checkbox" id="optAutoUndoError" onchange="toggleSetting('autoUndoError')" class="w-5 h-5 accent-blue-600 rounded cursor-pointer">
+                </div>
+
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--cell-border);">
+                    <div>
+                        <div class="font-bold">تمييز الصف والعمود والأرقام المتشابهة</div>
+                        <div class="text-xs" style="color: var(--text-secondary);">تظليل المناطق المرتبطة بالخلية المحددة</div>
+                    </div>
+                    <input type="checkbox" id="optHighlight" onchange="toggleSetting('highlight')" class="w-5 h-5 accent-blue-600 rounded cursor-pointer">
+                </div>
+
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--cell-border);">
+                    <div>
+                        <div class="font-bold">إخفاء الأرقام المكتملة</div>
+                        <div class="text-xs" style="color: var(--text-secondary);">إخفاء الرقم من لوحة الأرقام عند استخدامه 9 مرات</div>
+                    </div>
+                    <input type="checkbox" id="optHideUsed" onchange="toggleSetting('hideUsed')" class="w-5 h-5 accent-blue-600 rounded cursor-pointer">
+                </div>
+
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--cell-border);">
+                    <div>
+                        <div class="font-bold">التلميح الذكي التلقائي</div>
+                        <div class="text-xs" style="color: var(--text-secondary);">تنبيهك عند تحديد آخر خانة فارغة في صف أو مربع</div>
+                    </div>
+                    <input type="checkbox" id="optSmartHint" onchange="toggleSetting('smartHint')" class="w-5 h-5 accent-blue-600 rounded cursor-pointer">
+                </div>
+
+                <div class="flex items-center justify-between py-2">
+                    <div>
+                        <div class="font-bold">المؤثرات الصوتية</div>
+                        <div class="text-xs" style="color: var(--text-secondary);">أصوات تفاعلية عند النقر وإكمال الصفوف</div>
+                    </div>
+                    <input type="checkbox" id="optSound" onchange="toggleSetting('sound')" class="w-5 h-5 accent-blue-600 rounded cursor-pointer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Theme & Appearance Modal -->
+    <div id="themeModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="card-surface w-full max-w-sm rounded-2xl p-5 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-extrabold flex items-center gap-2">
+                    <i class="fas fa-palette text-blue-600"></i> المظهر والخلفيات
+                </h2>
+                <button onclick="closeModal('themeModal')" class="w-8 h-8 rounded-full flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="setTheme('light')" class="p-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-900 font-bold text-sm flex flex-col items-center gap-2 hover:border-blue-500">
+                    <div class="w-8 h-8 rounded-full bg-white border border-slate-300 shadow-inner"></div>
+                    <span>أبيض ناصع</span>
+                </button>
+                <button onclick="setTheme('paper')" class="p-3 rounded-xl border-2 border-[#dcd3c1] bg-[#f4efe6] text-[#2c241b] font-bold text-sm flex flex-col items-center gap-2 hover:border-[#8c5a2b]">
+                    <div class="w-8 h-8 rounded-full bg-[#fcf9f2] border border-[#8c5a2b] shadow-inner"></div>
+                    <span>ورق كلاسيكي</span>
+                </button>
+                <button onclick="setTheme('dark')" class="p-3 rounded-xl border-2 border-slate-700 bg-slate-900 text-white font-bold text-sm flex flex-col items-center gap-2 hover:border-blue-400">
+                    <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-600 shadow-inner"></div>
+                    <span>الوضع الليلي</span>
+                </button>
+                <button onclick="setTheme('mint')" class="p-3 rounded-xl border-2 border-emerald-200 bg-emerald-50 text-emerald-950 font-bold text-sm flex flex-col items-center gap-2 hover:border-emerald-600">
+                    <div class="w-8 h-8 rounded-full bg-white border border-emerald-500 shadow-inner"></div>
+                    <span>نعناع هادئ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Statistics Modal -->
+    <div id="statsModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="card-surface w-full max-w-md rounded-2xl p-5 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-extrabold flex items-center gap-2">
+                    <i class="fas fa-chart-bar text-amber-500"></i> الإحصائيات والإنجازات
+                </h2>
+                <button onclick="closeModal('statsModal')" class="w-8 h-8 rounded-full flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="statsContent" class="grid grid-cols-2 gap-3 text-center mb-4"></div>
+            <div class="p-3 rounded-xl text-xs" style="background-color: var(--bg-main);">
+                <div class="font-bold mb-1 flex items-center gap-1.5">
+                    <i class="fas fa-award text-amber-500"></i> سلسلة التحديات اليومية
+                </div>
+                <p id="dailyStreakText" style="color: var(--text-secondary);">أكملت 0 تحديات يومية هذا الشهر.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Victory / Game Over Modal -->
+    <div id="endGameModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="card-surface w-full max-w-sm rounded-2xl p-6 text-center shadow-2xl">
+            <div id="endGameIcon" class="flex justify-center mb-3">
+                <img src="trophy.svg" alt="Trophy" class="w-16 h-16">
+            </div>
+            <h2 id="endGameTitle" class="text-2xl font-extrabold mb-1">عمل رائع!</h2>
+            <p id="endGameSubtitle" class="text-sm mb-5" style="color: var(--text-secondary);">لقد أكملت اللغز بنجاح تام</p>
+
+            <div class="grid grid-cols-3 gap-2 p-3 rounded-xl mb-5 num-font" style="background-color: var(--bg-main);">
+                <div>
+                    <div class="text-[11px]" style="color: var(--text-secondary);">الوقت</div>
+                    <div id="endTime" class="font-extrabold text-base">00:00</div>
+                </div>
+                <div>
+                    <div class="text-[11px]" style="color: var(--text-secondary);">النقاط</div>
+                    <div id="endScore" class="font-extrabold text-base text-blue-600">0</div>
+                </div>
+                <div>
+                    <div class="text-[11px]" style="color: var(--text-secondary);">المستوى</div>
+                    <div id="endDiff" class="font-extrabold text-sm">متوسط</div>
+                </div>
+            </div>
+
+            <div class="space-y-2.5">
+                <button id="secondChanceBtn" onclick="useSecondChance()" class="hidden w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold shadow transition">
+                    <i class="fas fa-heart mr-1"></i> فرصة إضافية (تصفير الخطأ الأخير)
+                </button>
+                <button onclick="closeModal('endGameModal'); openModal('homeModal');" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow transition">
+                    لعبة جديدة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Custom JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
