@@ -1,11 +1,26 @@
 
 {
+  "id": "./",
   "name": "Sudoku Simba",
   "short_name": "Sudoku Simba",
-  "description": "Sudoku Simba is a fun and challenging Sudoku puzzle game. Play, improve your logic, and enjoy solving puzzles.",
-  "start_url": "/Sudoku-Simba/",
-  "scope": "/Sudoku-Simba/",
+  "description": "A fun and challenging Sudoku puzzle game. Solve puzzles, improve your logic skills, and enjoy playing Sudoku anytime.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#673ab7"
+  "theme_color": "#673ab7",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
